@@ -1,64 +1,39 @@
-# Terraform Provider Scaffolding (Terraform Plugin Framework)
+This provider runs a command locally.
 
-_This template repository is built on the [Terraform Plugin Framework](https://github.com/hashicorp/terraform-plugin-framework). The template repository built on the [Terraform Plugin SDK](https://github.com/hashicorp/terraform-plugin-sdk) can be found at [terraform-provider-scaffolding](https://github.com/hashicorp/terraform-provider-scaffolding). See [Which SDK Should I Use?](https://www.terraform.io/docs/plugin/which-sdk.html) in the Terraform documentation for additional information._
+Unlike using `null_resource` with `local-exec`, this is an "always-dirty" resource which will be updated every time you apply the stack. This makes it good for connecting to local builders like make, where the build is very fast if nothing changed.
 
-This repository is a *template* for a [Terraform](https://www.terraform.io) provider. It is intended as a starting point for creating Terraform providers, containing:
+It has an optional `output` path attribute which is a file that will be hashed when the build completes. You can use this as an input for other resources.
 
-- A resource and a data source (`internal/provider/`),
-- Examples (`examples/`) and generated documentation (`docs/`),
-- Miscellaneous meta files.
+If the command has multiple outputs, you should use `hashicorp/local` resources with a `depends_on` the `run` resource and ignore `output`.
 
-These files contain boilerplate code that you will need to edit to create your own Terraform provider. Tutorials for creating Terraform providers can be found on the [HashiCorp Learn](https://learn.hashicorp.com/collections/terraform/providers-plugin-framework) platform. _Terraform Plugin Framework specific guides are titled accordingly._
+# Installation with Terraform CDK
 
-Please see the [GitHub template repository documentation](https://help.github.com/en/github/creating-cloning-and-archiving-repositories/creating-a-repository-from-a-template) for how to create a new repository from this template on GitHub.
+Run
 
-Once you've written your provider, you'll want to [publish it on the Terraform Registry](https://www.terraform.io/docs/registry/providers/publishing.html) so that others can use it.
-
-## Requirements
-
-- [Terraform](https://www.terraform.io/downloads.html) >= 1.0
-- [Go](https://golang.org/doc/install) >= 1.18
-
-## Building The Provider
-
-1. Clone the repository
-1. Enter the repository directory
-1. Build the provider using the Go `install` command:
-
-```shell
-go install
+```
+cdktf provider add andrewbaxter/localrun
 ```
 
-## Adding Dependencies
+# Installation with Terraform
 
-This provider uses [Go modules](https://github.com/golang/go/wiki/Modules).
-Please see the Go documentation for the most up to date information about using Go modules.
+See the dropdown on the Registry page.
 
-To add a new dependency `github.com/author/dependency` to your Terraform provider:
+# Documentation
 
-```shell
-go get github.com/author/dependency
-go mod tidy
+See the Registry or look at `docs/`.
+
+# Building
+
+Make sure git submodules are cloned and up to date with `git submodule update --init`.
+
+Run
+
+```
+./build.sh
 ```
 
-Then commit the changes to `go.mod` and `go.sum`.
+This will generate the source files and render the docs.
 
-## Using the provider
+# Technical Details
 
-Fill this in for each provider
-
-## Developing the Provider
-
-If you wish to work on the provider, you'll first need [Go](http://www.golang.org) installed on your machine (see [Requirements](#requirements) above).
-
-To compile the provider, run `go install`. This will build the provider and put the provider binary in the `$GOPATH/bin` directory.
-
-To generate or update documentation, run `go generate`.
-
-In order to run the full suite of Acceptance tests, run `make testacc`.
-
-*Note:* Acceptance tests create real resources, and often cost money to run.
-
-```shell
-make testacc
-```
+This uses a fake `_auto_update` attribute which synthetically changes every time the provider's `Read` operation is called, causing Terraform to believe the resource is out of sync and needs an update.
