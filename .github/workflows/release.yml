@@ -31,9 +31,6 @@ jobs:
         with:
           go-version-file: "go.mod"
           cache: true
-      - run: go run ./generator
-        #- run: go run github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs
-        #working-directory: generated
       - name: Import GPG key
         uses: crazy-max/ghaction-import-gpg@v5
         id: import_gpg
