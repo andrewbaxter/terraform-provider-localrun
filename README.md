@@ -1,10 +1,8 @@
 This provider runs a command locally.
 
-Unlike using `null_resource` with `local-exec`, this is an "always-dirty" resource which will be updated every time you apply the stack. This makes it good for connecting to local builders like make, where the build is very fast if nothing changed.
+Unlike using `null_resource` with `local-exec`, this runs the build every time terraform is invoked. This works well with external caching build systems with fast no-op builds, like `make`, `go build`, `cargo`, etc.
 
-It has an optional `output` path attribute which is a file that will be hashed when the build completes. You can use this as an input for other resources.
-
-If the command has multiple outputs, you should use `hashicorp/local` resources with a `depends_on` the `run` resource and ignore `output`.
+It has an optional `outputs` path attribute which is a list of files that will be hashed when the build completes, placed in `output_hashes`. You can use these as an input for other resources.
 
 # Installation with Terraform CDK
 
