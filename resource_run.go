@@ -96,9 +96,16 @@ func (r RunResource) run(state *RunResourceModel, diagnostics *diag.Diagnostics)
 func (r RunResource) updateHashes(state *RunResourceModel, diagnostics *diag.Diagnostics) {
 	out := []attr.Value{}
 	for _, o := range state.Outputs {
-		p, err := filepath.Abs(filepath.Join(state.WorkingDir.ValueString(), o.ValueString()))
-		if err != nil {
-			panic(err)
+		var p string
+		if filepath.IsAbs(o.ValueString()) {
+			// Work around filepath incorrectly joining abs to abs paths
+			p = o.ValueString()
+		} else {
+			var err error
+			p, err = filepath.Abs(filepath.Join(state.WorkingDir.ValueString(), o.ValueString()))
+			if err != nil {
+				panic(err)
+			}
 		}
 		digest := sha256.New()
 		f, err := os.Open(p)
