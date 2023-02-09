@@ -21,7 +21,11 @@ func (ThisProvider) Configure(context.Context, provider.ConfigureRequest, *provi
 
 // DataSources implements provider.Provider
 func (ThisProvider) DataSources(context.Context) []func() datasource.DataSource {
-	return nil
+	return []func() datasource.DataSource{
+		func() datasource.DataSource {
+			return Run{}
+		},
+	}
 }
 
 // Metadata implements provider.Provider
@@ -31,11 +35,7 @@ func (ThisProvider) Metadata(_ context.Context, req provider.MetadataRequest, re
 
 // Resources implements provider.Provider
 func (ThisProvider) Resources(context.Context) []func() resource.Resource {
-	return []func() resource.Resource{
-		func() resource.Resource {
-			return RunResource{}
-		},
-	}
+	return nil
 }
 
 // Schema implements provider.Provider
