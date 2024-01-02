@@ -88,7 +88,7 @@ func (r Run) run(state *RunModel, diagnostics *diag.Diagnostics) {
 	cmd.Dir = state.WorkingDir.ValueString()
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		diagnostics.AddError("Run failed", string(out))
+		diagnostics.AddError("Run failed", fmt.Sprintf("%s\nStdout:\n%s", err, string(out)))
 		return
 	}
 }
