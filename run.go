@@ -11,12 +11,15 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/armon/circbuf"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	datasourceschema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"github.com/mitchellh/go-linereader"
 )
 
 type RunModel struct {
@@ -65,7 +68,7 @@ func (Run) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datas
 		},
 	}
 }
-func (r Run) run(state *RunModel, diagnostics *diag.Diagnostics) {
+func (r Run) run(ctx context.Context, state *RunModel, diagnostics *diag.Diagnostics) {
 	cmd0 := []string{}
 	for _, c := range state.Command {
 		cmd0 = append(cmd0, c.ValueString())
@@ -86,9 +89,39 @@ func (r Run) run(state *RunModel, diagnostics *diag.Diagnostics) {
 	}
 	cmd.Env = env1
 	cmd.Dir = state.WorkingDir.ValueString()
-	out, err := cmd.CombinedOutput()
+
+	pipeRead, pipeWrite, err := os.Pipe()
 	if err != nil {
-		diagnostics.AddError("Run failed", fmt.Sprintf("%s\nStdout:\n%s", err, string(out)))
+		diagnostics.AddError("Failed to initialize pipe for output", err.Error())
+		return
+	}
+	cmd.Stderr = pipeWrite
+	cmd.Stdout = pipeWrite
+
+	output, _ := circbuf.NewBuffer(10 * 1024 * 1024)
+
+	copyDoneCh := make(chan struct{})
+	go func() {
+		defer close(copyDoneCh)
+		lr := linereader.New(io.TeeReader(pipeRead, output))
+		for line := range lr.Ch {
+			tflog.Info(ctx, line)
+		}
+	}()
+
+	err = cmd.Start()
+	if err == nil {
+		err = cmd.Wait()
+	}
+	pipeWrite.Close()
+
+	select {
+	case <-copyDoneCh:
+	case <-ctx.Done():
+	}
+
+	if err != nil {
+		diagnostics.AddError("Run failed", fmt.Sprintf("%s\nStdout/err:\n%s", err, string(output.Bytes())))
 		return
 	}
 }
@@ -145,7 +178,7 @@ func (r Run) Read(ctx context.Context, req datasource.ReadRequest, resp *datasou
 		return
 	}
 
-	r.run(&state, &resp.Diagnostics)
+	r.run(ctx, &state, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}
