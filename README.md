@@ -1,8 +1,12 @@
-This provider runs a command locally.
+This provider provides tools for running commands locally.
 
-Unlike using `null_resource` with `local-exec`, this runs the build every time terraform is invoked. This works well with external caching build systems with fast no-op builds, like `make`, `go build`, `cargo`, etc.
+This provides two options:
 
-It has an optional `outputs` path attribute which is a list of files that will be hashed when the build completes, placed in `output_hashes`. You can use these as an input for other resources.
+- The datasource `Run` executes the command during the `Read` phase, every time you run Terraform (unlike `local-exec` with `null_resource`). This is for things like `Makefile` which should have quick no-op builds.
+
+- The resource `Run` executes the command if any parameters or explicit dependencies change. You can also do this with the `local-run` provisioner, but this can be more convenient.
+
+Both allow you to list file outputs and will calculate the hash for outputs if you need them for another command.
 
 # Installation with Terraform CDK
 
