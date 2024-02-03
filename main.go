@@ -23,7 +23,7 @@ func (ThisProvider) Configure(context.Context, provider.ConfigureRequest, *provi
 func (ThisProvider) DataSources(context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
 		func() datasource.DataSource {
-			return DataRun{}
+			return DataAlwaysRun{}
 		},
 	}
 }

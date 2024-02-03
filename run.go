@@ -225,7 +225,7 @@ func (r Run) run(ctx context.Context, state *RunModel, diagnostics *diag.Diagnos
 func (r Run) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 }
 
-type DataRunModel struct {
+type DataAlwaysRunModel struct {
 	Command      []types.String `tfsdk:"command"`
 	Environment  types.Map      `tfsdk:"environment"`
 	WorkingDir   types.String   `tfsdk:"working_dir"`
@@ -233,14 +233,14 @@ type DataRunModel struct {
 	OutputHashes types.List     `tfsdk:"output_hashes"`
 }
 
-type DataRun struct {
+type DataAlwaysRun struct {
 }
 
-func (DataRun) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_run"
+func (DataAlwaysRun) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_always_run"
 }
 
-func (DataRun) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+func (DataAlwaysRun) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = datasourceschema.Schema{
 		MarkdownDescription: "Unconditionally run a command (during read phase). This is for actions with dependencies not tracked by Terraform, like a Makefile.",
 		Attributes: map[string]datasourceschema.Attribute{
@@ -272,8 +272,8 @@ func (DataRun) Schema(ctx context.Context, req datasource.SchemaRequest, resp *d
 	}
 }
 
-func (r DataRun) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var state DataRunModel
+func (r DataAlwaysRun) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+	var state DataAlwaysRunModel
 	diags := req.Config.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
